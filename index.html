@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boulder Dash Klon</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>Boulder Dash</h1>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Punkte:</span>
+                    <span id="score" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Level:</span>
+                    <span id="level" class="stat-value">1</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Leben:</span>
+                    <span id="lives" class="stat-value">3</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-canvas-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="game-controls">
+            <div class="control-buttons">
+                <button id="startBtn" class="control-btn">Start</button>
+                <button id="pauseBtn" class="control-btn">Pause</button>
+                <button id="resetBtn" class="control-btn">Reset</button>
+            </div>
+            <div class="instructions">
+                <p>Verwende Pfeiltasten oder WASD zum Bewegen</p>
+                <p>Sammle Diamanten und vermeide Gegner!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
