@@ -221,6 +221,9 @@ class BoulderDashGame {
         
         // Setze Power-ups
         this.placePowerUps();
+        
+        // Aktualisiere das Grid mit allen Elementen
+        this.updateGrid();
     }
     
     generateTerrain() {
@@ -280,10 +283,13 @@ class BoulderDashGame {
                 const x = 2 + Math.floor(Math.random() * (GRID_WIDTH - 4));
                 const y = 2 + Math.floor(Math.random() * (GRID_HEIGHT - 4));
                 
-                if (this.grid[y][x] === TILE_TYPES.EMPTY && 
-                    (this.player.x !== x || this.player.y !== y)) {
+                if (this.grid[y][x] === TILE_TYPES.EMPTY &&
+                    (this.player.x !== x || this.player.y !== y) &&
+                    !this.rocks.some(rock => rock.x === x && rock.y === y) &&
+                    !this.diamonds.some(diamond => diamond.x === x && diamond.y === y) &&
+                    !this.powerUps.some(powerUp => powerUp.x === x && powerUp.y === y)) {
                     
-                    const enemyType = Math.random() < 0.5 ? ENEMY_TYPES.WALKER : 
+                    const enemyType = Math.random() < 0.5 ? ENEMY_TYPES.WALKER :
                                      Math.random() < 0.7 ? ENEMY_TYPES.CHASER : ENEMY_TYPES.PATROL;
                     
                     this.enemies.push({
@@ -325,8 +331,12 @@ class BoulderDashGame {
                 const x = 2 + Math.floor(Math.random() * (GRID_WIDTH - 4));
                 const y = 2 + Math.floor(Math.random() * (GRID_HEIGHT - 4));
                 
-                if (this.grid[y][x] === TILE_TYPES.EMPTY && 
-                    (this.player.x !== x || this.player.y !== y)) {
+                // Stelle sicher, dass nur ein Element pro Feld platziert werden kann
+                if (this.grid[y][x] === TILE_TYPES.EMPTY &&
+                    (this.player.x !== x || this.player.y !== y) &&
+                    !this.enemies.some(enemy => enemy.x === x && enemy.y === y) &&
+                    !this.diamonds.some(diamond => diamond.x === x && diamond.y === y) &&
+                    !this.powerUps.some(powerUp => powerUp.x === x && powerUp.y === y)) {
                     
                     this.rocks.push({ x, y, falling: false });
                     placed = true;
@@ -345,8 +355,11 @@ class BoulderDashGame {
                 const x = 2 + Math.floor(Math.random() * (GRID_WIDTH - 4));
                 const y = 2 + Math.floor(Math.random() * (GRID_HEIGHT - 4));
                 
-                if (this.grid[y][x] === TILE_TYPES.EMPTY && 
-                    (this.player.x !== x || this.player.y !== y)) {
+                if (this.grid[y][x] === TILE_TYPES.EMPTY &&
+                    (this.player.x !== x || this.player.y !== y) &&
+                    !this.enemies.some(enemy => enemy.x === x && enemy.y === y) &&
+                    !this.rocks.some(rock => rock.x === x && rock.y === y) &&
+                    !this.powerUps.some(powerUp => powerUp.x === x && powerUp.y === y)) {
                     
                     this.diamonds.push({ x, y });
                     placed = true;
@@ -365,8 +378,11 @@ class BoulderDashGame {
                 const x = 2 + Math.floor(Math.random() * (GRID_WIDTH - 4));
                 const y = 2 + Math.floor(Math.random() * (GRID_HEIGHT - 4));
                 
-                if (this.grid[y][x] === TILE_TYPES.EMPTY && 
-                    (this.player.x !== x || this.player.y !== y)) {
+                if (this.grid[y][x] === TILE_TYPES.EMPTY &&
+                    (this.player.x !== x || this.player.y !== y) &&
+                    !this.enemies.some(enemy => enemy.x === x && enemy.y === y) &&
+                    !this.rocks.some(rock => rock.x === x && rock.y === y) &&
+                    !this.diamonds.some(diamond => diamond.x === x && diamond.y === y)) {
                     
                     const type = Math.floor(Math.random() * 4) + 1;
                     this.powerUps.push({ x, y, type, collected: false });
@@ -435,6 +451,13 @@ class BoulderDashGame {
                 // Verschiebe den Felsbrocken
                 this.grid[newY][newX] = TILE_TYPES.EMPTY;
                 this.grid[rockNewY][rockNewX] = TILE_TYPES.ROCK;
+                
+                // Aktualisiere die Felsbrocken-Liste
+                const rockIndex = this.rocks.findIndex(r => r.x === newX && r.y === newY);
+                if (rockIndex !== -1) {
+                    this.rocks[rockIndex].x = rockNewX;
+                    this.rocks[rockIndex].y = rockNewY;
+                }
                 
                 // Bewege den Spieler
                 this.player.x = newX;
@@ -543,8 +566,8 @@ class BoulderDashGame {
         if (this.lives <= 0) {
             this.gameOver();
         } else {
-            // Setze Spieler zurück an Startposition
-            this.placePlayer();
+            // Starte das Level neu, wenn der Spieler noch Leben hat
+            this.resetLevel();
         }
     }
     
@@ -561,6 +584,92 @@ class BoulderDashGame {
         
         // Generiere neues Level
         this.generateLevel();
+    }
+    
+    resetLevel() {
+        // Setze Spieler an Startposition
+        this.placePlayer();
+        
+        // Setze alle Gegner zurück
+        for (const enemy of this.enemies) {
+            enemy.x = enemy.startX;
+            enemy.y = enemy.startY;
+        }
+        
+        // Setze alle Felsbrocken zurück
+        for (const rock of this.rocks) {
+            rock.x = rock.startX;
+            rock.y = rock.startY;
+        }
+        
+        // Setze alle Diamanten zurück
+        for (const diamond of this.diamonds) {
+            diamond.collected = false;
+        }
+        
+        // Setze alle Power-ups zurück
+        for (const powerUp of this.powerUps) {
+            powerUp.collected = false;
+        }
+        
+        // Aktualisiere das Raster
+        this.updateGrid();
+        
+        // Aktualisiere die UI
+        this.updateUI();
+    }
+    
+    updateGrid() {
+        // Setze das Grid auf den Grundzustand zurück
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            for (let x = 0; x < GRID_WIDTH; x++) {
+                if (x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1) {
+                    this.grid[y][x] = TILE_TYPES.WALL;
+                } else {
+                    this.grid[y][x] = TILE_TYPES.EMPTY;
+                }
+            }
+        }
+        
+        // Platziere Spieler
+        if (this.player) {
+            this.grid[this.player.y][this.player.x] = TILE_TYPES.PLAYER;
+        }
+        
+        // Platziere Gegner
+        for (const enemy of this.enemies) {
+            this.grid[enemy.y][enemy.x] = TILE_TYPES.ENEMY;
+        }
+        
+        // Platziere Felsbrocken
+        for (const rock of this.rocks) {
+            this.grid[rock.y][rock.x] = TILE_TYPES.ROCK;
+        }
+        
+        // Platziere Diamanten
+        for (const diamond of this.diamonds) {
+            this.grid[diamond.y][diamond.x] = TILE_TYPES.DIAMOND;
+        }
+        
+        // Platziere Power-ups
+        for (const powerUp of this.powerUps) {
+            if (!powerUp.collected) {
+                this.grid[powerUp.y][powerUp.x] = TILE_TYPES.POWER_UP;
+            }
+        }
+        
+        // Füge Terrain hinzu (unter allen anderen Elementen)
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            for (let x = 0; x < GRID_WIDTH; x++) {
+                if (this.grid[y][x] === TILE_TYPES.EMPTY) {
+                    // Terrain basierend auf der ursprünglichen Generierung
+                    const dirtDensity = 0.6 + (this.level * 0.02);
+                    if (Math.random() < dirtDensity) {
+                        this.grid[y][x] = TILE_TYPES.DIRT;
+                    }
+                }
+            }
+        }
     }
     
     updateEnemies() {
